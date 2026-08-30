@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Pre-commit: branch protection + formatting of staged files.
+#
+# Deliberately cheap. A commit is a checkpoint; the full gate runs on pre-push,
+# which is where work becomes visible to other people and to CI.
+#
+# Output goes through `printf`, not `echo`: whether `echo` expands a backslash
+# escape is implementation-defined in POSIX, while `printf` is specified.
+#
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+protected_branches="main master"
+
+for branch in $protected_branches; do
+    if [ "$current_branch" = "$branch" ]; then
+        printf '\n'
+        printf '%b🚫 COMMIT BLOCKED!%b\n' "$RED" "$NC"
+        printf '%b❌ Direct commits to '"'"'%b%s%b'"'"' are not allowed.%b\n' \
+            "$RED" "$YELLOW" "$current_branch" "$RED" "$NC"
+        printf '\n'
+        printf '%b📋 Branch first:%b\n' "$CYAN" "$NC"
+        printf '   %bgit checkout -b feature/short-description%b\n' "$GREEN" "$NC"
+        printf '   %bgit checkout -b fix/short-description%b\n' "$GREEN" "$NC"
+        printf '\n'
+        printf '%b   Everything reaches the default branch through a reviewed pull request.%b\n' \
+            "$CYAN" "$NC"
+        printf '\n'
+        exit 1
+    fi
+done
+
+npx lint-staged

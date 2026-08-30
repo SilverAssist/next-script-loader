@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Pre-push: the full gate.
+#
+# The same checks CI runs, before the push rather than after. The suite takes a
+# couple of seconds here, so there is no reason to defer it to a runner and find
+# out minutes later across two matrix legs.
+#
+# Output goes through `printf`, not `echo`: whether `echo` expands a backslash
+# escape is implementation-defined in POSIX, while `printf` is specified.
+#
+
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+printf '\n'
+printf '%b🔍 Running the full gate before pushing…%b\n' "$CYAN" "$NC"
+printf '\n'
+
+if ! npm run check; then
+    printf '\n'
+    printf '%b🚫 PUSH BLOCKED — the gate failed.%b\n' "$RED" "$NC"
+    printf '\n'
+    printf '%bFix it, or push once with:%b\n' "$CYAN" "$NC"
+    printf '   %bgit push --no-verify%b\n' "$GREEN" "$NC"
+    printf '\n'
+    exit 1
+fi
+
+printf '\n'
+printf '%b✅ Gate clean — pushing.%b\n' "$GREEN" "$NC"
+printf '\n'

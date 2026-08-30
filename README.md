@@ -7,22 +7,10 @@ state machine.
 
 ## Why this exists
 
-The same problem was solved twice, independently, with zero shared code:
-
-- **`leadcapture-io`'s `ScriptManager`** (site-repo code, see
-  `nextjs-boilerplate/docs/LEAD_FORM_PROVIDERS.md`) — a real, proven
-  singleton script lifecycle: `configure()`, `loadScript(variant)` (ref-counted),
-  `unloadScript()`, `reloadScript(variant)`, `reset()`, plus ownership
-  arbitration (`setScriptOwner`/`releaseScriptOwnership`/`forceSetScriptOwner`)
-  so a modal and an on-page form don't fight over the same script.
-- **`@silverassist/recaptcha`'s client component** — a hand-rolled version of
-  the exact same problem: global `window.__recaptchaLoaded` /
-  `__recaptchaLoading` / `__recaptchaCallbacks` flags, solving "load once,
-  queue callbacks while loading" with none of `ScriptManager`'s code reused.
-
-This package generalizes the proven shape (`ScriptManager`'s real API, not an
-interface invented in the abstract) into one implementation both should sit
-on top of.
+A single, shared implementation of singleton script loading — configure
+once, load with reference counting, switch variants, arbitrate ownership
+between competing components — so every vendor-script integration builds on
+the same tested base instead of each one maintaining its own copy.
 
 ## Install
 

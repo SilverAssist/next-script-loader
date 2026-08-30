@@ -4,6 +4,7 @@
   "description": "Singleton, reference-counted third-party script loader for React/Next.js apps — the shared base recaptcha and every lead-form/vendor-script package build on instead of each hand-rolling the same window-global singleton pattern.",
   "author": "Miguel Colmenares <me@miguelcolmenares.com>",
   "license": "PolyForm-Noncommercial-1.0.0",
+  "prettier": "@silverassist/npm-package-standards/prettier",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SilverAssist/script-loader.git"
@@ -56,18 +57,20 @@
     "prepublishOnly": "npm run clean && npm run typecheck && npm run lint && npm run test && npm run build",
     "clean": "rm -rf dist",
     "check": "npm run format:check && npm run typecheck && npm run lint && npm run test",
+    "e2e:setup": "next-testing-toolkit build-fixture --port 3214",
+    "e2e": "npm run e2e:setup && playwright test -c e2e/playwright.config.ts",
     "prepare": "husky || true"
   },
   "engines": {
     "node": ">=22.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.62.1",
+    "@silverassist/next-testing-toolkit": "^0.2.1",
+    "@silverassist/npm-package-standards": "^0.1.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
     "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
     "husky": "^9.1.7",
     "jest": "^30.5.0",
     "jest-environment-jsdom": "^30.2.0",

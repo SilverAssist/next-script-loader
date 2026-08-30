@@ -3,3 +3,15 @@ dist/
 *.log
 .DS_Store
 coverage/
+
+# --- next-testing-toolkit (generated fixture files) ---
+e2e/fixture/node_modules
+e2e/fixture/.next
+e2e/fixture/package-lock.json
+e2e/fixture/app/layout.tsx
+e2e/fixture/next.config.mjs
+e2e/fixture/next-env.d.ts
+e2e/fixture/tsconfig.json
+e2e/fixture/package.json
+test-results
+playwright-report

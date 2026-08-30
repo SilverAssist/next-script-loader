@@ -1,29 +1,15 @@
-import js from "@eslint/js";
-import prettierRecommended from "eslint-plugin-prettier/recommended";
+import base from "@silverassist/npm-package-standards/eslint/base";
+import { ESLINT_IGNORE_PATTERNS } from "@silverassist/next-testing-toolkit";
 import tseslint from "typescript-eslint";
 
-export default [
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  prettierRecommended,
-  {
-    files: ["**/*.ts"],
-    rules: {
-      "prettier/prettier": "error",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
-    },
-  },
-  {
-    ignores: [
-      "node_modules/",
-      "dist/",
-      "*.config.mjs",
-      "*.config.js",
-      "*.config.ts",
-      "*.config.cjs",
-    ],
-  },
-];
+export default tseslint.config(...base, {
+  ignores: [
+    ...ESLINT_IGNORE_PATTERNS,
+    "node_modules/",
+    "dist/",
+    "*.config.mjs",
+    "*.config.js",
+    "*.config.ts",
+    "*.config.cjs",
+  ],
+});

@@ -93,8 +93,9 @@ resolves, so this hasn't mattered in practice; revisit with an
 
 ## Status
 
-New package (2026-08-30). Wired into `recaptcha` as its first consumer;
-not yet piloted in a real site. Uses `@silverassist/next-testing-toolkit`'s packaging e2e
+Published to npm as of 2026-08-30 (`0.1.0`). Wired into `recaptcha` as its
+first consumer; not yet piloted in a real site. Uses
+`@silverassist/next-testing-toolkit`'s packaging e2e
 (builds against the packed tarball) — this package has no React
 components, so there's no RSC-boundary contract to protect the way there
 is for `icons`/`recaptcha`/`consent-banner`; what the harness confirms

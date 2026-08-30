@@ -1,20 +1,17 @@
 {
+  "extends": "@silverassist/npm-package-standards/tsconfig/base",
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "allowJs": false,
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    // outDir/rootDir/include/exclude aren't in the shared base: TypeScript
+    // resolves path-valued compilerOptions in an extended config relative to
+    // that config file's own location, not the consumer's.
     "outDir": "./dist",
     "rootDir": "./src",
+    // Also required, even though it isn't path-valued: extending a config
+    // from a different package resolves lib.*.d.ts inconsistently when that
+    // package's own typescript version differs from this one -- restating
+    // it is the confirmed fix.
+    "lib": ["ES2020", "DOM"],
+    "allowJs": false,
     "types": ["jest", "node"]
   },
   "include": ["src/**/*"],

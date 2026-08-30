@@ -94,11 +94,11 @@ resolves, so this hasn't mattered in practice; revisit with an
 ## Status
 
 New package (2026-08-30), not yet piloted in a real site or wired into
-`recaptcha`. No e2e/packaging harness (`@silverassist/next-testing-toolkit`)
-yet — this is pure logic with no React components, so the RSC-boundary
-concern that harness targets doesn't apply the same way it does for
-`icons`/`recaptcha`/`consent-banner`, but the packaging-defect coverage
-(`exports` map correctness) would still be worth adding.
+`recaptcha`. Uses `@silverassist/next-testing-toolkit`'s packaging e2e
+(builds against the packed tarball) — this package has no React
+components, so there's no RSC-boundary contract to protect the way there
+is for `icons`/`recaptcha`/`consent-banner`; what the harness confirms
+here is that `exports` map resolves correctly.
 
 ## Development
 
@@ -107,6 +107,8 @@ npm install
 npm run typecheck
 npm test
 npm run build
+npx playwright install --with-deps chromium   # once
+npm run e2e
 ```
 
 ## License

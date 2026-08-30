@@ -114,3 +114,7 @@ npm run e2e
 ## License
 
 [PolyForm Noncommercial 1.0.0](./LICENSE)
+
+---
+
+Made with ❤️ by Silver Assist

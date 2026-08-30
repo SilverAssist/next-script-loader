@@ -1,5 +1,5 @@
 /**
- * @silverassist/script-loader
+ * @silverassist/next-script-loader
  *
  * Singleton, reference-counted third-party script loader for React/Next.js
  * apps.

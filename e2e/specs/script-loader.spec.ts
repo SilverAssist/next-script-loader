@@ -1,5 +1,5 @@
 /**
- * Integration spec for @silverassist/script-loader consumed by a real
+ * Integration spec for @silverassist/next-script-loader consumed by a real
  * Next app.
  *
  * The fixture installs the *packed tarball*, so this runs against exactly
@@ -13,7 +13,7 @@ import { expect, test } from "@playwright/test";
 
 test("resolves from a Server Component page against the packed tarball", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1")).toHaveText("@silverassist/script-loader fixture");
+  await expect(page.locator("h1")).toHaveText("@silverassist/next-script-loader fixture");
 
   const resolved = JSON.parse((await page.locator("pre").textContent()) ?? "{}");
 

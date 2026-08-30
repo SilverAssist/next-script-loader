@@ -1,4 +1,4 @@
-import { ScriptLoader } from "@silverassist/script-loader";
+import { ScriptLoader } from "@silverassist/next-script-loader";
 
 /**
  * This page's only job is to import the package from the packed tarball
@@ -28,7 +28,7 @@ const resolved = {
 export default function Page() {
   return (
     <main>
-      <h1>@silverassist/script-loader fixture</h1>
+      <h1>@silverassist/next-script-loader fixture</h1>
       <pre>{JSON.stringify(resolved, null, 2)}</pre>
     </main>
   );

@@ -1,4 +1,4 @@
-# @silverassist/script-loader
+# @silverassist/next-script-loader
 
 Singleton, reference-counted third-party script loader for React/Next.js
 apps. The shared base for `recaptcha`, and any future lead-form/vendor-script
@@ -15,7 +15,7 @@ the same tested base instead of each one maintaining its own copy.
 ## Install
 
 ```bash
-npm install @silverassist/script-loader
+npm install @silverassist/next-script-loader
 ```
 
 ## Usage
@@ -25,7 +25,7 @@ rather than sharing one across unrelated vendors, so one vendor's `unload()`
 never tears down a different vendor's script.
 
 ```typescript
-import { ScriptLoader } from "@silverassist/script-loader";
+import { ScriptLoader } from "@silverassist/next-script-loader";
 
 const leadCaptureLoader = new ScriptLoader();
 
@@ -93,8 +93,8 @@ resolves, so this hasn't mattered in practice; revisit with an
 
 ## Status
 
-New package (2026-08-30), not yet piloted in a real site or wired into
-`recaptcha`. Uses `@silverassist/next-testing-toolkit`'s packaging e2e
+New package (2026-08-30). Wired into `recaptcha` as its first consumer;
+not yet piloted in a real site. Uses `@silverassist/next-testing-toolkit`'s packaging e2e
 (builds against the packed tarball) — this package has no React
 components, so there's no RSC-boundary contract to protect the way there
 is for `icons`/`recaptcha`/`consent-banner`; what the harness confirms

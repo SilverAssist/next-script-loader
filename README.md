@@ -64,19 +64,35 @@ if (claimed) {
 leadCaptureLoader.releaseOwnership("modal-form");
 ```
 
+A delayed unmount cleanup (e.g. "unload 100ms after unmount, to survive a
+same-tick remount") needs to skip itself if a newer mount already
+reloaded the script in the meantime — otherwise it can tear down a script
+the new mount is depending on. Capture the generation at mount time and
+pass it back to `unload()`:
+
+```typescript
+useEffect(() => {
+  const mountGeneration = leadCaptureLoader.getGeneration();
+  return () => {
+    setTimeout(() => leadCaptureLoader.unload(mountGeneration), 100);
+  };
+}, []);
+```
+
 ## API
 
-| Method                 | Behavior                                                                 |
-| ---------------------- | ------------------------------------------------------------------------ |
-| `configure(config)`    | Injects `{ urls, onLoad?, onError? }`. Safe to call more than once.      |
-| `load(variant)`        | Loads (or joins an in-flight load for) `variant`; increments ref count.  |
-| `reload(variant)`      | Swaps the active variant without changing the ref count.                 |
-| `unload()`             | Decrements ref count; removes the `<script>` only once it reaches zero.  |
-| `reset()`              | Full teardown — script, ref count, owner, and config. For tests.         |
-| `setOwner(id)`         | Claims ownership if unowned or already owned by `id`. Returns `boolean`. |
-| `releaseOwnership(id)` | Releases ownership, only if `id` is the current owner.                   |
-| `forceSetOwner(id)`    | Unconditionally overrides the current owner.                             |
-| `owner` (getter)       | The current owner id, or `null`.                                         |
+| Method                  | Behavior                                                                                                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `configure(config)`     | Injects `{ urls, onLoad?, onError? }`. Safe to call more than once.                                                                                                                                    |
+| `load(variant)`         | Loads (or joins an in-flight load for) `variant`; increments ref count.                                                                                                                                |
+| `reload(variant)`       | Swaps the active variant without changing the ref count. A second call for the same variant while the first is still in flight shares that in-flight promise instead of tearing the script down again. |
+| `unload(atGeneration?)` | Decrements ref count; removes the `<script>` only once it reaches zero. Skipped entirely (including the decrement) if `atGeneration` is older than the current generation.                             |
+| `getGeneration()`       | The counter `load()`/`reload()` bump on every call — capture it to detect a stale cleanup.                                                                                                             |
+| `reset()`               | Full teardown — script, ref count, owner, generation, and config. For tests.                                                                                                                           |
+| `setOwner(id)`          | Claims ownership if unowned or already owned by `id`. Returns `boolean`.                                                                                                                               |
+| `releaseOwnership(id)`  | Releases ownership, only if `id` is the current owner.                                                                                                                                                 |
+| `forceSetOwner(id)`     | Unconditionally overrides the current owner.                                                                                                                                                           |
+| `owner` (getter)        | The current owner id, or `null`.                                                                                                                                                                       |
 
 `load()`/`reload()` never throw synchronously — every failure path
 (unconfigured, no DOM, network/script error) resolves through the returned
@@ -93,8 +109,9 @@ resolves, so this hasn't mattered in practice; revisit with an
 
 ## Status
 
-Published to npm as of 2026-08-30 (`0.1.0`). Wired into `recaptcha` as its
-first consumer; not yet piloted in a real site. Uses
+Published to npm as of 2026-08-30 (`0.1.0`). Wired into `recaptcha` and
+into `@silverassist/leadcapture-form`, which is piloted live in
+`senioradvice-nextjs`. Uses
 `@silverassist/next-testing-toolkit`'s packaging e2e
 (builds against the packed tarball) — this package has no React
 components, so there's no RSC-boundary contract to protect the way there

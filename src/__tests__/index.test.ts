@@ -149,6 +149,96 @@ describe("ScriptLoader ref counting", () => {
     loader.unload();
     expect(document.head.querySelectorAll("script")).toHaveLength(0);
   });
+
+  it("a second reload() for the same variant while the first is in flight shares its promise instead of creating a second script", async () => {
+    const loader = new ScriptLoader();
+    loader.configure(CONFIG);
+
+    const first = loader.load("desktop");
+    resolveScript(CONFIG.urls.desktop);
+    await first;
+
+    const reloadA = loader.reload("mobile");
+    const reloadB = loader.reload("mobile");
+
+    // Only one <script> tag was ever created for the second reload -- a
+    // second, independent tag would mean resolveScript's querySelector
+    // grabbed one of two candidates non-deterministically.
+    expect(document.head.querySelectorAll("script")).toHaveLength(1);
+
+    resolveScript(CONFIG.urls.mobile);
+    await Promise.all([reloadA, reloadB]);
+
+    expect(reloadA).toBe(reloadB);
+    expect(document.head.querySelectorAll("script")).toHaveLength(1);
+  });
+});
+
+describe("ScriptLoader generation guard", () => {
+  afterEach(() => {
+    document.head.innerHTML = "";
+  });
+
+  it("increments the generation on load() and reload()", async () => {
+    const loader = new ScriptLoader();
+    loader.configure(CONFIG);
+    expect(loader.getGeneration()).toBe(0);
+
+    const first = loader.load("desktop");
+    resolveScript(CONFIG.urls.desktop);
+    await first;
+    expect(loader.getGeneration()).toBe(1);
+
+    const switched = loader.reload("mobile");
+    resolveScript(CONFIG.urls.mobile);
+    await switched;
+    expect(loader.getGeneration()).toBe(2);
+  });
+
+  it("skips a stale unload() (including the reference-count decrement) when a newer load/reload happened since", async () => {
+    const loader = new ScriptLoader();
+    loader.configure(CONFIG);
+
+    const first = loader.load("desktop");
+    resolveScript(CONFIG.urls.desktop);
+    await first;
+    const staleGeneration = loader.getGeneration();
+
+    // A newer mount reloads before the stale cleanup runs.
+    const reloaded = loader.reload("mobile");
+    resolveScript(CONFIG.urls.mobile);
+    await reloaded;
+
+    loader.unload(staleGeneration);
+
+    // The stale unload was skipped entirely -- the script is still there
+    // and the reference count wasn't decremented.
+    expect(document.head.querySelectorAll("script")).toHaveLength(1);
+    loader.unload(); // the reload's own eventual, non-stale unload
+    expect(document.head.querySelectorAll("script")).toHaveLength(0);
+  });
+
+  it("does not skip a non-stale unload()", async () => {
+    const loader = new ScriptLoader();
+    loader.configure(CONFIG);
+
+    const first = loader.load("desktop");
+    resolveScript(CONFIG.urls.desktop);
+    await first;
+
+    loader.unload(loader.getGeneration());
+    expect(document.head.querySelectorAll("script")).toHaveLength(0);
+  });
+
+  it("resets the generation counter", () => {
+    const loader = new ScriptLoader();
+    loader.configure(CONFIG);
+    loader.load("desktop");
+    expect(loader.getGeneration()).toBeGreaterThan(0);
+
+    loader.reset();
+    expect(loader.getGeneration()).toBe(0);
+  });
 });
 
 describe("ScriptLoader.reset", () => {

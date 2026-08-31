@@ -55,6 +55,21 @@ export class ScriptLoader {
   #loadingPromise: Promise<void> | null = null;
   #refCount = 0;
   #owner: string | null = null;
+  #generation = 0;
+
+  /**
+   * Monotonically increasing counter, bumped on every {@link load}/
+   * {@link reload} call. Pair with {@link unload}'s `atGeneration` param to
+   * guard a delayed cleanup scheduled by a caller that has since been
+   * superseded by a newer `load()`/`reload()` — e.g. a component that
+   * unmounted during a page navigation, after a newer mount already
+   * reloaded the script. One counter for the whole loader (not per variant)
+   * matches its single-active-variant design: only one script's lifecycle
+   * is ever in flight at a time.
+   */
+  getGeneration(): number {
+    return this.#generation;
+  }
 
   /**
    * Injects this loader's configuration. Safe to call more than once (e.g.
@@ -81,6 +96,7 @@ export class ScriptLoader {
    * unconfigured, the environment has no DOM, or the script fails to load
    */
   load(variant: string): Promise<void> {
+    this.#generation += 1;
     this.#refCount += 1;
     return this.#ensureLoaded(variant);
   }
@@ -91,9 +107,23 @@ export class ScriptLoader {
    * {@link load} call) and needs to switch which variant is active, e.g. a
    * device-size change swapping a desktop token for a mobile one.
    *
+   * A second `reload()` call for the same variant while the first is still
+   * in flight shares that in-flight promise instead of tearing the script
+   * down again: removing a `<script>` element doesn't reliably cancel its
+   * network request, so tearing down and recreating an already-in-flight
+   * script can let both the superseded and the new script execute and each
+   * apply their side effects (e.g. a vendor script populating a DOM
+   * container twice). This is what makes `reload()` safe to call from an
+   * effect that isn't itself guarded against React Strict Mode's dev-only
+   * double invoke.
+   *
    * @param variant - Key into the configured `urls` map
    */
   reload(variant: string): Promise<void> {
+    this.#generation += 1;
+    if (this.#currentVariant === variant && this.#loadingPromise) {
+      return this.#loadingPromise;
+    }
     this.#teardownScript();
     return this.#ensureLoaded(variant);
   }
@@ -110,8 +140,18 @@ export class ScriptLoader {
    * browsers), so `onLoad`/`onError` can still fire once for a load that
    * was already unloaded. This is a known, accepted gap for v1 — real
    * callers unload on unmount, well after load resolves.
+   *
+   * @param atGeneration - The generation ({@link getGeneration}) captured
+   * when this cleanup was scheduled. If it's older than the current
+   * generation, a `load()`/`reload()` has happened since — this call is
+   * stale (superseded by a newer mount) and is skipped entirely, including
+   * the reference-count decrement. Omit to skip the check (legacy/simple
+   * callers that never call `reload()`).
    */
-  unload(): void {
+  unload(atGeneration?: number): void {
+    if (atGeneration !== undefined && atGeneration < this.#generation) {
+      return;
+    }
     if (this.#refCount === 0) return;
     this.#refCount -= 1;
     if (this.#refCount === 0) {
@@ -121,14 +161,16 @@ export class ScriptLoader {
 
   /**
    * Full teardown: removes the script element, clears the reference count,
-   * the owner, and the injected config. For tests — a real app should never
-   * need this, since `unload()` already tears down at zero references.
+   * the owner, the generation counter, and the injected config. For tests —
+   * a real app should never need this, since `unload()` already tears down
+   * at zero references.
    */
   reset(): void {
     this.#teardownScript();
     this.#refCount = 0;
     this.#owner = null;
     this.#config = null;
+    this.#generation = 0;
   }
 
   /**

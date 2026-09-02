@@ -1,4 +1,4 @@
-name: Publish Package to npm
+name: Publish Package
 
 on:
   release:
@@ -10,8 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Lets the runner mint the OIDC token npm exchanges for publish rights.
+      # Lets the runner mint the OIDC token npm exchanges for publish rights (npmjs.org).
       id-token: write
+      # Dual-published to GitHub Packages too, auth'd with the workflow's own
+      # GITHUB_TOKEN (no OIDC trusted-publishing equivalent there). This keeps
+      # the whole @silverassist scope resolvable from a single registry for
+      # consumers whose .npmrc points @silverassist at GitHub Packages --
+      # needed because @silverassist/nextjs-core is GitHub-Packages-only
+      # (private); mixing registries within one scope otherwise makes npm
+      # treat every OTHER package's lockfile-resolved URL as an untrusted
+      # "remote" dependency (npm's allow-remote hardening).
+      packages: write
     steps:
       - uses: actions/checkout@v7
 
@@ -32,7 +41,7 @@ jobs:
       # Skips instead of failing when the version is already on the
       # registry -- keeps a re-run (or a release cut after a manual
       # publish) idempotent rather than erroring on a duplicate version.
-      - name: Check if this version is already published
+      - name: Check if this version is already published (npmjs.org)
         id: version-check
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
@@ -48,14 +57,44 @@ jobs:
       - if: steps.version-check.outputs.already-published == 'false'
         run: npm publish --access public
 
+      # Re-running setup-node with a different registry-url rewrites .npmrc's
+      # @silverassist scope mapping (and its auth line) to point at GitHub
+      # Packages instead -- the officially supported way to publish the same
+      # job to a second registry. Doesn't disturb the npmjs.org publish above,
+      # which already ran.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@silverassist'
+
+      - name: Check if this version is already published (GitHub Packages)
+        id: ghp-version-check
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+            echo "already-published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already-published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to GitHub Packages
+        if: steps.ghp-version-check.outputs.already-published == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish
+
       - name: Create summary
         if: success()
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           if [ "${{ steps.version-check.outputs.already-published }}" = "true" ]; then
-            echo "## ⏭️ Version \`$PACKAGE_VERSION\` already published — skipped" >> $GITHUB_STEP_SUMMARY
+            echo "## ⏭️ Version \`$PACKAGE_VERSION\` already published to npmjs.org — skipped" >> $GITHUB_STEP_SUMMARY
           else
-            echo "## 📦 Package Published Successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "## 📦 Published to npmjs.org" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Version:** \`$PACKAGE_VERSION\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -67,4 +106,10 @@ jobs:
             echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
             echo "npm install @silverassist/next-script-loader@$PACKAGE_VERSION" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.ghp-version-check.outputs.already-published }}" = "true" ]; then
+            echo "## ⏭️ Version \`$PACKAGE_VERSION\` already published to GitHub Packages — skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 📦 Published to GitHub Packages" >> $GITHUB_STEP_SUMMARY
+            echo "- [View on GitHub Packages](https://github.com/SilverAssist/next-script-loader/pkgs/npm/next-script-loader)" >> $GITHUB_STEP_SUMMARY
           fi

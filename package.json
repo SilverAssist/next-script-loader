@@ -70,7 +70,7 @@
     "@silverassist/next-testing-toolkit": "^0.2.1",
     "@silverassist/npm-package-standards": "^0.1.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.4.0",
     "eslint": "^10.9.1",
     "husky": "^9.1.7",
     "jest": "^30.5.0",

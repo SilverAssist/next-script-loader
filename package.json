@@ -79,7 +79,7 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.12",
     "tsdown": "^0.22.14",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.68.0"
   },
   "lint-staged": {

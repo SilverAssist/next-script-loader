@@ -67,22 +67,22 @@
     "node": ">=22.0.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@silverassist/next-testing-toolkit": "^0.2.1",
     "@silverassist/npm-package-standards": "^0.1.0",
-    "@swc/core": "^1.16.1",
+    "@swc/core": "^1.16.2",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
-    "@types/node": "^26.4.0",
-    "eslint": "^10.9.1",
+    "@types/node": "^26.5.1",
+    "eslint": "^10.10.0",
     "husky": "^9.1.7",
-    "jest": "^30.5.0",
-    "jest-environment-jsdom": "^30.2.0",
-    "lint-staged": "^17.3.0",
-    "prettier": "^3.6.2",
-    "tsdown": "^0.22.14",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
+    "lint-staged": "^17.5.1",
+    "prettier": "^3.9.6",
+    "tsdown": "^0.23.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.68.0"
+    "typescript-eslint": "^8.70.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,cjs,json,md}": [
